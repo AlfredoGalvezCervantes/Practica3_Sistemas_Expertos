@@ -1,0 +1,151 @@
+import tkinter as tk
+from tkinter import messagebox
+import random
+
+# Lista de casos con culpables, armas y locaciones asociadas
+casos = [
+    {"culpable": "Violeta Plum", "arma": "Candelabro", "locacion": "Casa"},
+    {"culpable": "Ruben Mostaza", "arma": "Cuchillo de Cocina", "locacion": "Hotel"},
+    {"culpable": "Celeste Azul", "arma": "Revolver", "locacion": "Cuarto"},
+    {"culpable": "Bruno Verde", "arma": "Cuerda", "locacion": "Cocina"},
+    {"culpable": "Rosa Madero", "arma": "Llave Inglesa", "locacion": "Jardin"}
+]
+
+# Información sobre los personajes y sus herramientas
+personajes = {
+    "Violeta Plum": {"profesion": "Profesora de matematicas", "ubicacion": "", "herramienta": ""},
+    "Ruben Mostaza": {"profesion": "Coronel retirado", "ubicacion": "", "herramienta": ""},
+    "Celeste Azul": {"profesion": "Joven artista", "ubicacion": "", "herramienta": ""},
+    "Bruno Verde": {"profesion": "Reverendo de la parroquia", "ubicacion": "", "herramienta": ""},
+    "Rosa Madero": {"profesion": "Doctora especializada en enfermedades infecciosas", "ubicacion": "", "herramienta": ""}
+}
+
+# Diccionario de herramientas para cada personaje
+herramientas = {
+    "Violeta Plum": ["Pizarra y tiza", "Libros", "Ordenador", "Calculadora", "Mapa"],
+    "Ruben Mostaza": ["Uniforme militar", "Bata de bano", "Cuchillos de cocina", "Pistola", "Brujula"],
+    "Celeste Azul": ["Pincel y lienzo", "Arcilla", "Paleta", "Esmaltes", "Camara"],
+    "Bruno Verde": ["Biblia", "Rosario", "Cruz", "Agua bendita", "Velas"],
+    "Rosa Madero": ["Maletin medico", "Microscopio", "Termometro", "Jeringas", "Botiquin"]
+}
+
+# Preguntas disponibles para hacer a cada personaje
+preguntas_disponibles = [
+    "Donde estaba {}?",
+    "Que herramienta estaba usando {}?",
+    "Donde estaba {} y que herramienta estaba usando?"
+]
+
+intentos_disponibles = 3
+culpable_correcto = ""
+ventana_juego = None
+
+def hacer_pregunta(personaje, pregunta_idx):
+    global intentos_disponibles
+    
+    if intentos_disponibles > 0:
+        intentos_disponibles -= 1
+        pregunta = preguntas_disponibles[pregunta_idx].format(personaje)
+        respuesta = ""
+        
+        if pregunta_idx == 0:
+            ubicaciones_posibles = ["Cocina", "Sala de estar", "Biblioteca", "Jardin", "Cuarto"]
+            respuesta = random.choice(ubicaciones_posibles)
+            personajes[personaje]["ubicacion"] = respuesta
+        elif pregunta_idx == 1:
+            herramientas_posibles = herramientas[personaje].copy()
+            respuesta = random.choice(herramientas_posibles)
+            personajes[personaje]["herramienta"] = respuesta
+        elif pregunta_idx == 2:
+            ubicacion = random.choice(["Cocina", "Sala de estar", "Biblioteca", "Jardin", "Cuarto"])
+            herramienta = random.choice(herramientas[personaje])
+            respuesta = f"Estaba en la {ubicacion} usando: {herramienta}"
+            personajes[personaje]["ubicacion"] = ubicacion
+            personajes[personaje]["herramienta"] = herramienta
+        
+        messagebox.showinfo("Respuesta", f"{pregunta}\n\nRespuesta: {respuesta}")
+        
+        if intentos_disponibles == 0:
+            messagebox.showinfo("Fin del juego", "Se acabaron los intentos. Intenta identificar al culpable.")
+    else:
+        messagebox.showinfo("Fin del juego", "Se acabaron los intentos. Intenta identificar al culpable.")
+
+def verificar_eleccion(culpable_elegido):
+    global intentos_disponibles, culpable_correcto
+    
+    if culpable_elegido == culpable_correcto:
+        messagebox.showinfo("Resultado", "Correcto! Has descubierto al culpable!")
+    else:
+        messagebox.showerror("Resultado", "Incorrecto. Sigue investigando.")
+    
+    intentos_disponibles = 3
+    ventana_juego.destroy()
+    mostrar_opciones_fin()
+
+def iniciar_juego():
+    global culpable_correcto, ventana_juego
+    
+    caso_actual = random.choice(casos)
+    culpable_correcto = caso_actual["culpable"]
+    arma_correcta = caso_actual["arma"]
+    locacion_correcta = caso_actual["locacion"]
+    
+    # Crear y configurar la ventana principal
+    ventana_juego = tk.Tk()
+    ventana_juego.title("Juego Clue")
+    ventana_juego.geometry("600x400")
+    
+    historia_crimen = f"Ha ocurrido un crimen en la {locacion_correcta}!\nEl culpable utilizo un/a {arma_correcta.lower()} para cometer el crimen."
+    texto_historia = tk.Label(ventana_juego, text=historia_crimen, padx=20, pady=20, font=("Arial", 12))
+    texto_historia.pack()
+    
+    texto_pregunta = tk.Label(ventana_juego, text="Haz hasta 3 preguntas sobre cada personaje:", padx=20, pady=10, font=("Arial", 12))
+    texto_pregunta.pack()
+    
+    for personaje in personajes:
+        boton_culpable = tk.Button(ventana_juego, text=personaje, command=lambda c=personaje: verificar_eleccion(c), padx=20, pady=10)
+        boton_culpable.pack(pady=5)
+    
+    def abrir_preguntas():
+        ventana_preguntas = tk.Toplevel()
+        ventana_preguntas.title("Preguntas")
+        ventana_preguntas.geometry("400x300")
+        
+        for personaje in personajes:
+            for idx in range(3):
+                pregunta_btn = tk.Button(ventana_preguntas, text=preguntas_disponibles[idx].format(personaje), 
+                                         command=lambda p=personaje, i=idx: hacer_pregunta(p, i), padx=20, pady=10)
+                pregunta_btn.pack(pady=5)
+    
+    boton_preguntas = tk.Button(ventana_juego, text="Hacer preguntas sobre los personajes", command=abrir_preguntas, padx=20, pady=10)
+    boton_preguntas.pack(pady=10)
+    
+    ventana_juego.mainloop()
+
+def mostrar_opciones_fin():
+    ventana_opciones = tk.Tk()
+    ventana_opciones.title("Fin del juego")
+    ventana_opciones.geometry("300x150")
+    
+    mensaje_fin = tk.Label(ventana_opciones, text="Quieres jugar de nuevo?", padx=20, pady=20, font=("Arial", 12))
+    mensaje_fin.pack()
+    
+    def jugar_nuevo():
+        ventana_opciones.destroy()
+        iniciar_juego()
+    
+    def salir_juego():
+        ventana_opciones.destroy()
+        if ventana_juego:
+            ventana_juego.destroy()
+    
+    boton_jugar_nuevo = tk.Button(ventana_opciones, text="Si", command=jugar_nuevo, padx=20, pady=10)
+    boton_jugar_nuevo.pack(side=tk.LEFT, padx=20)
+    
+    boton_salir = tk.Button(ventana_opciones, text="No", command=salir_juego, padx=20, pady=10)
+    boton_salir.pack(side=tk.RIGHT, padx=20)
+    
+    ventana_opciones.mainloop()
+
+# Iniciar el juego al ejecutar el script
+iniciar_juego()
