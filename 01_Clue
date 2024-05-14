@@ -1,32 +1,25 @@
 import tkinter as tk
 from tkinter import messagebox
+from PIL import Image, ImageTk
 import random
+import os  # Importamos la biblioteca os para trabajar con archivos del sistema
 
 # Lista de casos con culpables, armas y locaciones asociadas
 casos = [
-    {"culpable": "Violeta Plum", "arma": "Candelabro", "locacion": "Casa"},
-    {"culpable": "Ruben Mostaza", "arma": "Cuchillo de Cocina", "locacion": "Hotel"},
-    {"culpable": "Celeste Azul", "arma": "Revolver", "locacion": "Cuarto"},
-    {"culpable": "Bruno Verde", "arma": "Cuerda", "locacion": "Cocina"},
-    {"culpable": "Rosa Madero", "arma": "Llave Inglesa", "locacion": "Jardin"}
+    {"culpable": "Violeta Plum", "arma": "Candelabro", "locacion": "Biblioteca"},
+    {"culpable": "Ruben Mostaza", "arma": "Cuchillo de Cocina", "locacion": "Cocina"},
+    {"culpable": "Celeste Azul", "arma": "Revolver", "locacion": "Sala de estar"},
+    {"culpable": "Bruno Verde", "arma": "Cuerda", "locacion": "Jardin"},
+    {"culpable": "Rosa Madero", "arma": "Llave Inglesa", "locacion": "Cuarto"}
 ]
 
 # Información sobre los personajes y sus herramientas
 personajes = {
-    "Violeta Plum": {"profesion": "Profesora de matematicas", "ubicacion": "", "herramienta": ""},
-    "Ruben Mostaza": {"profesion": "Coronel retirado", "ubicacion": "", "herramienta": ""},
-    "Celeste Azul": {"profesion": "Joven artista", "ubicacion": "", "herramienta": ""},
-    "Bruno Verde": {"profesion": "Reverendo de la parroquia", "ubicacion": "", "herramienta": ""},
-    "Rosa Madero": {"profesion": "Doctora especializada en enfermedades infecciosas", "ubicacion": "", "herramienta": ""}
-}
-
-# Diccionario de herramientas para cada personaje
-herramientas = {
-    "Violeta Plum": ["Pizarra y tiza", "Libros", "Ordenador", "Calculadora", "Mapa"],
-    "Ruben Mostaza": ["Uniforme militar", "Bata de bano", "Cuchillos de cocina", "Pistola", "Brujula"],
-    "Celeste Azul": ["Pincel y lienzo", "Arcilla", "Paleta", "Esmaltes", "Camara"],
-    "Bruno Verde": ["Biblia", "Rosario", "Cruz", "Agua bendita", "Velas"],
-    "Rosa Madero": ["Maletin medico", "Microscopio", "Termometro", "Jeringas", "Botiquin"]
+    "Violeta Plum": {"profesion": "Profesora de matematicas", "ubicacion": "Biblioteca", "herramienta": "Candelabro", "imagen": "violeta_plum.jpg"},
+    "Ruben Mostaza": {"profesion": "Coronel retirado", "ubicacion": "Cocina", "herramienta": "Cuchillo de Cocina", "imagen": "ruben_mostaza.jpg"},
+    "Celeste Azul": {"profesion": "Joven artista", "ubicacion": "Sala de estar", "herramienta": "Revolver", "imagen": "celeste_azul.jpg"},
+    "Bruno Verde": {"profesion": "Reverendo de la parroquia", "ubicacion": "Jardin", "herramienta": "Cuerda", "imagen": "bruno_verde.jpg"},
+    "Rosa Madero": {"profesion": "Doctora especializada en enfermedades infecciosas", "ubicacion": "Cuarto", "herramienta": "Llave Inglesa", "imagen": "rosa_madero.jpg"}
 }
 
 # Preguntas disponibles para hacer a cada personaje
@@ -36,7 +29,7 @@ preguntas_disponibles = [
     "Donde estaba {} y que herramienta estaba usando?"
 ]
 
-intentos_disponibles = 3
+intentos_disponibles = 4
 culpable_correcto = ""
 ventana_juego = None
 
@@ -49,19 +42,11 @@ def hacer_pregunta(personaje, pregunta_idx):
         respuesta = ""
         
         if pregunta_idx == 0:
-            ubicaciones_posibles = ["Cocina", "Sala de estar", "Biblioteca", "Jardin", "Cuarto"]
-            respuesta = random.choice(ubicaciones_posibles)
-            personajes[personaje]["ubicacion"] = respuesta
+            respuesta = personajes[personaje]["ubicacion"]
         elif pregunta_idx == 1:
-            herramientas_posibles = herramientas[personaje].copy()
-            respuesta = random.choice(herramientas_posibles)
-            personajes[personaje]["herramienta"] = respuesta
+            respuesta = personajes[personaje]["herramienta"]
         elif pregunta_idx == 2:
-            ubicacion = random.choice(["Cocina", "Sala de estar", "Biblioteca", "Jardin", "Cuarto"])
-            herramienta = random.choice(herramientas[personaje])
-            respuesta = f"Estaba en la {ubicacion} usando: {herramienta}"
-            personajes[personaje]["ubicacion"] = ubicacion
-            personajes[personaje]["herramienta"] = herramienta
+            respuesta = f"Estaba en la {personajes[personaje]['ubicacion']} usando: {personajes[personaje]['herramienta']}"
         
         messagebox.showinfo("Respuesta", f"{pregunta}\n\nRespuesta: {respuesta}")
         
@@ -74,11 +59,13 @@ def verificar_eleccion(culpable_elegido):
     global intentos_disponibles, culpable_correcto
     
     if culpable_elegido == culpable_correcto:
-        messagebox.showinfo("Resultado", "Correcto! Has descubierto al culpable!")
+        mensaje = f"Correcto! Has descubierto al culpable! El verdadero culpable fue encontrado en la {personajes[culpable_correcto]['ubicacion']} usando: {personajes[culpable_correcto]['herramienta']}"
+        messagebox.showinfo("Resultado", mensaje)
     else:
-        messagebox.showerror("Resultado", "Incorrecto. Sigue investigando.")
+        mensaje = f"Incorrecto. Sigue investigando. El verdadero culpable fue encontrado en la {personajes[culpable_correcto]['ubicacion']} usando: {personajes[culpable_correcto]['herramienta']}"
+        messagebox.showerror("Resultado", mensaje)
     
-    intentos_disponibles = 3
+    intentos_disponibles = 4
     ventana_juego.destroy()
     mostrar_opciones_fin()
 
@@ -90,26 +77,50 @@ def iniciar_juego():
     arma_correcta = caso_actual["arma"]
     locacion_correcta = caso_actual["locacion"]
     
+    print("El personaje culpable es:", culpable_correcto)
+    
     # Crear y configurar la ventana principal
     ventana_juego = tk.Tk()
     ventana_juego.title("Juego Clue")
-    ventana_juego.geometry("600x400")
     
-    historia_crimen = f"Ha ocurrido un crimen en la {locacion_correcta}!\nEl culpable utilizo un/a {arma_correcta.lower()} para cometer el crimen."
+    # Configurar la ventana en modo de pantalla completa
+    ventana_juego.attributes("-fullscreen", True)
+    
+    # Establecer el fondo de la ventana
+    fondo_imagen = Image.open("escena_crimen.jpg")  # Reemplaza "escena_crimen.jpg" con el nombre de tu imagen de fondo
+    fondo_imagen = fondo_imagen.resize((ventana_juego.winfo_screenwidth(), ventana_juego.winfo_screenheight()), Image.ANTIALIAS)
+    fondo_tk = ImageTk.PhotoImage(fondo_imagen)
+    fondo_label = tk.Label(ventana_juego, image=fondo_tk)
+    fondo_label.place(x=0, y=0, relwidth=1, relheight=1)
+    
+    # Reproducir el sonido de fondo
+    os.system("start sonido_crimen.mp3")  # Reemplaza "sonido_crimen.mp3" con el nombre de tu archivo de sonido
+    
+    historia_crimen = f"Ha ocurrido un crimen en la {locacion_correcta}!\nEl culpable, utilizó un/a {arma_correcta.lower()} para cometer el crimen."
     texto_historia = tk.Label(ventana_juego, text=historia_crimen, padx=20, pady=20, font=("Arial", 12))
     texto_historia.pack()
     
-    texto_pregunta = tk.Label(ventana_juego, text="Haz hasta 3 preguntas sobre cada personaje:", padx=20, pady=10, font=("Arial", 12))
+    texto_pregunta = tk.Label(ventana_juego, text="Haz hasta 4 preguntas sobre cada personaje:", padx=20, pady=10, font=("Arial", 12))
     texto_pregunta.pack()
     
     for personaje in personajes:
+        imagen = Image.open(personajes[personaje]["imagen"])
+        imagen = imagen.resize((50, 50), Image.ANTIALIAS)
+        imagen_tk = ImageTk.PhotoImage(imagen)
+        label_imagen = tk.Label(ventana_juego, image=imagen_tk)
+        label_imagen.image = imagen_tk
+        label_imagen.pack()
+        
         boton_culpable = tk.Button(ventana_juego, text=personaje, command=lambda c=personaje: verificar_eleccion(c), padx=20, pady=10)
         boton_culpable.pack(pady=5)
     
     def abrir_preguntas():
         ventana_preguntas = tk.Toplevel()
         ventana_preguntas.title("Preguntas")
-        ventana_preguntas.geometry("400x300")
+        
+        ancho_pantalla = ventana_preguntas.winfo_screenwidth()
+        alto_pantalla = ventana_preguntas.winfo_screenheight()
+        ventana_preguntas.geometry(f"{ancho_pantalla}x{alto_pantalla}")
         
         for personaje in personajes:
             for idx in range(3):
