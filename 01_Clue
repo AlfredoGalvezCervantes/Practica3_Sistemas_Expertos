@@ -1,32 +1,49 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, Canvas, Scrollbar
 from PIL import Image, ImageTk
 import random
-import os  # Importamos la biblioteca os para trabajar con archivos del sistema
+import os
 
-# Lista de casos con culpables, armas y locaciones asociadas
-casos = [
-    {"culpable": "Violeta Plum", "arma": "Candelabro", "locacion": "Biblioteca"},
-    {"culpable": "Ruben Mostaza", "arma": "Cuchillo de Cocina", "locacion": "Cocina"},
-    {"culpable": "Celeste Azul", "arma": "Revolver", "locacion": "Sala de estar"},
-    {"culpable": "Bruno Verde", "arma": "Cuerda", "locacion": "Jardin"},
-    {"culpable": "Rosa Madero", "arma": "Llave Inglesa", "locacion": "Cuarto"}
-]
-
-# Información sobre los personajes y sus herramientas
+# Información sobre los personajes
 personajes = {
-    "Violeta Plum": {"profesion": "Profesora de matematicas", "ubicacion": "Biblioteca", "herramienta": "Candelabro", "imagen": "violeta_plum.jpg"},
-    "Ruben Mostaza": {"profesion": "Coronel retirado", "ubicacion": "Cocina", "herramienta": "Cuchillo de Cocina", "imagen": "ruben_mostaza.jpg"},
-    "Celeste Azul": {"profesion": "Joven artista", "ubicacion": "Sala de estar", "herramienta": "Revolver", "imagen": "celeste_azul.jpg"},
-    "Bruno Verde": {"profesion": "Reverendo de la parroquia", "ubicacion": "Jardin", "herramienta": "Cuerda", "imagen": "bruno_verde.jpg"},
-    "Rosa Madero": {"profesion": "Doctora especializada en enfermedades infecciosas", "ubicacion": "Cuarto", "herramienta": "Llave Inglesa", "imagen": "rosa_madero.jpg"}
+    "Violeta Plum": {
+        "profesion": "Profesora de matemáticas",
+        "imagen": "violeta_plum.jpg",
+        "historia_adicional": "Violeta Plum es conocida por su afición a la jardinería. Pasaba muchas horas en la biblioteca investigando sobre plantas exóticas"
+    },
+    "Ruben Mostaza": {
+        "profesion": "Coronel retirado",
+        "imagen": "ruben_mostaza.jpg",
+        "historia_adicional": "Ruben Mostaza solía organizar cenas temáticas en la cocina para sus amigos y familiares. Él estaba planeando una cena sorpresa para su esposa."
+    },
+    "Celeste Azul": {
+        "profesion": "Joven artista",
+        "imagen": "celeste_azul.jpg",
+        "historia_adicional": "Celeste Azul estaba trabajando en una nueva pintura en la sala de estar. Era su lugar favorito para encontrar inspiración."
+    },
+    "Bruno Verde": {
+        "profesion": "Reverendo de la parroquia",
+        "imagen": "bruno_verde.jpg",
+        "historia_adicional": "Bruno Verde dedicaba su tiempo libre a cuidar del jardín. Consideraba el jardín como un lugar sagrado."
+    },
+    "Rosa Madero": {
+        "profesion": "Doctora especializada en enfermedades infecciosas",
+        "imagen": "rosa_madero.jpg",
+        "historia_adicional": "Rosa Madero era una entusiasta de la mecánica. Pasaba horas en su cuarto desmontando y arreglando dispositivos."
+    }
 }
 
-# Preguntas disponibles para hacer a cada personaje
+# Lista de herramientas
+herramientas = ["Candelabro", "Cuchillo de Cocina", "Revolver", "Cuerda", "Llave Inglesa"]
+
+# Lista de lugares
+lugares = ["Biblioteca", "Cocina", "Sala de estar", "Jardín", "Cuarto"]
+
+# Lista de preguntas disponibles
 preguntas_disponibles = [
-    "Donde estaba {}?",
-    "Que herramienta estaba usando {}?",
-    "Donde estaba {} y que herramienta estaba usando?"
+    "¿Dónde estaba {}?",
+    "¿Qué herramienta estaba usando {}?",
+    "¿Dónde estaba {} y qué herramienta estaba usando?"
 ]
 
 intentos_disponibles = 4
@@ -59,7 +76,7 @@ def verificar_eleccion(culpable_elegido):
     global intentos_disponibles, culpable_correcto
     
     if culpable_elegido == culpable_correcto:
-        mensaje = f"Correcto! Has descubierto al culpable! El verdadero culpable fue encontrado en la {personajes[culpable_correcto]['ubicacion']} usando: {personajes[culpable_correcto]['herramienta']}"
+        mensaje = f"¡Correcto! ¡Has descubierto al culpable! El verdadero culpable fue encontrado en la {personajes[culpable_correcto]['ubicacion']} usando: {personajes[culpable_correcto]['herramienta']}"
         messagebox.showinfo("Resultado", mensaje)
     else:
         mensaje = f"Incorrecto. Sigue investigando. El verdadero culpable fue encontrado en la {personajes[culpable_correcto]['ubicacion']} usando: {personajes[culpable_correcto]['herramienta']}"
@@ -72,10 +89,13 @@ def verificar_eleccion(culpable_elegido):
 def iniciar_juego():
     global culpable_correcto, ventana_juego
     
-    caso_actual = random.choice(casos)
-    culpable_correcto = caso_actual["culpable"]
-    arma_correcta = caso_actual["arma"]
-    locacion_correcta = caso_actual["locacion"]
+    # Asignar aleatoriamente la herramienta y el lugar a cada personaje
+    for personaje in personajes:
+        personajes[personaje]["herramienta"] = random.choice(herramientas)
+        personajes[personaje]["ubicacion"] = random.choice(lugares)
+    
+    # Elegir aleatoriamente el culpable
+    culpable_correcto = random.choice(list(personajes.keys()))
     
     print("El personaje culpable es:", culpable_correcto)
     
@@ -83,44 +103,53 @@ def iniciar_juego():
     ventana_juego = tk.Tk()
     ventana_juego.title("Juego Clue")
     
-    # Configurar la ventana en modo de pantalla completa
-    ventana_juego.attributes("-fullscreen", True)
+    # Configurar el tamaño de la ventana y el canvas
+    ancho_ventana = 500
+    alto_ventana = 600
+    ventana_juego.geometry(f"{ancho_ventana}x{alto_ventana}")
+    
+    canvas = Canvas(ventana_juego)
+    canvas.pack(side="left", fill="both", expand=True)
+    
+    # Agregar scrollbar al canvas
+    scrollbar = Scrollbar(ventana_juego, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    
+    # Crear el frame para los elementos del juego
+    frame = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=frame, anchor="nw")
     
     # Establecer el fondo de la ventana
-    fondo_imagen = Image.open("escena_crimen.jpg")  # Reemplaza "escena_crimen.jpg" con el nombre de tu imagen de fondo
-    fondo_imagen = fondo_imagen.resize((ventana_juego.winfo_screenwidth(), ventana_juego.winfo_screenheight()), Image.ANTIALIAS)
-    fondo_tk = ImageTk.PhotoImage(fondo_imagen)
-    fondo_label = tk.Label(ventana_juego, image=fondo_tk)
-    fondo_label.place(x=0, y=0, relwidth=1, relheight=1)
+
     
-    # Reproducir el sonido de fondo
-    os.system("start sonido_crimen.mp3")  # Reemplaza "sonido_crimen.mp3" con el nombre de tu archivo de sonido
-    
-    historia_crimen = f"Ha ocurrido un crimen en la {locacion_correcta}!\nEl culpable, utilizó un/a {arma_correcta.lower()} para cometer el crimen."
-    texto_historia = tk.Label(ventana_juego, text=historia_crimen, padx=20, pady=20, font=("Arial", 12))
+    historia_crimen = f"Ha ocurrido un crimen en la {personajes[culpable_correcto]['ubicacion']}!\nEl culpable, utilizó un/a {personajes[culpable_correcto]['herramienta'].lower()} para cometer el crimen."
+    texto_historia = tk.Label(frame, text=historia_crimen, padx=20, pady=20, font=("Arial", 12))
     texto_historia.pack()
     
-    texto_pregunta = tk.Label(ventana_juego, text="Haz hasta 4 preguntas sobre cada personaje:", padx=20, pady=10, font=("Arial", 12))
+    texto_pregunta = tk.Label(frame, text="Haz hasta 4 preguntas sobre cada personaje:", padx=20, pady=10, font=("Arial", 12))
     texto_pregunta.pack()
     
     for personaje in personajes:
         imagen = Image.open(personajes[personaje]["imagen"])
         imagen = imagen.resize((50, 50), Image.ANTIALIAS)
         imagen_tk = ImageTk.PhotoImage(imagen)
-        label_imagen = tk.Label(ventana_juego, image=imagen_tk)
+        label_imagen = tk.Label(frame, image=imagen_tk)
         label_imagen.image = imagen_tk
         label_imagen.pack()
         
-        boton_culpable = tk.Button(ventana_juego, text=personaje, command=lambda c=personaje: verificar_eleccion(c), padx=20, pady=10)
+        # Mostrar la historia adicional del personaje
+        historia_adicional_label = tk.Label(frame, text=personajes[personaje]["historia_adicional"], padx=20, pady=10, font=("Arial", 10), wraplength=400)
+        historia_adicional_label.pack()
+        
+        boton_culpable = tk.Button(frame, text=personaje, command=lambda c=personaje: verificar_eleccion(c), padx=20, pady=10)
         boton_culpable.pack(pady=5)
     
     def abrir_preguntas():
         ventana_preguntas = tk.Toplevel()
         ventana_preguntas.title("Preguntas")
-        
-        ancho_pantalla = ventana_preguntas.winfo_screenwidth()
-        alto_pantalla = ventana_preguntas.winfo_screenheight()
-        ventana_preguntas.geometry(f"{ancho_pantalla}x{alto_pantalla}")
         
         for personaje in personajes:
             for idx in range(3):
@@ -128,7 +157,7 @@ def iniciar_juego():
                                          command=lambda p=personaje, i=idx: hacer_pregunta(p, i), padx=20, pady=10)
                 pregunta_btn.pack(pady=5)
     
-    boton_preguntas = tk.Button(ventana_juego, text="Hacer preguntas sobre los personajes", command=abrir_preguntas, padx=20, pady=10)
+    boton_preguntas = tk.Button(frame, text="Hacer preguntas sobre los personajes", command=abrir_preguntas, padx=20, pady=10)
     boton_preguntas.pack(pady=10)
     
     ventana_juego.mainloop()
@@ -138,7 +167,7 @@ def mostrar_opciones_fin():
     ventana_opciones.title("Fin del juego")
     ventana_opciones.geometry("300x150")
     
-    mensaje_fin = tk.Label(ventana_opciones, text="Quieres jugar de nuevo?", padx=20, pady=20, font=("Arial", 12))
+    mensaje_fin = tk.Label(ventana_opciones, text="¿Quieres jugar de nuevo?", padx=20, pady=20, font=("Arial", 12))
     mensaje_fin.pack()
     
     def jugar_nuevo():
@@ -150,7 +179,7 @@ def mostrar_opciones_fin():
         if ventana_juego:
             ventana_juego.destroy()
     
-    boton_jugar_nuevo = tk.Button(ventana_opciones, text="Si", command=jugar_nuevo, padx=20, pady=10)
+    boton_jugar_nuevo = tk.Button(ventana_opciones, text="Sí", command=jugar_nuevo, padx=20, pady=10)
     boton_jugar_nuevo.pack(side=tk.LEFT, padx=20)
     
     boton_salir = tk.Button(ventana_opciones, text="No", command=salir_juego, padx=20, pady=10)
